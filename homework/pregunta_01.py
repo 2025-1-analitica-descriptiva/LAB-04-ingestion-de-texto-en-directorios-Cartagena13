@@ -4,9 +4,40 @@
 """
 Escriba el codigo que ejecute la accion solicitada en cada pregunta.
 """
-
+import pandas as pd
+from pathlib import Path
 
 def pregunta_01():
+    ROOT        = Path('files/input/input')          # carpeta raíz descomprimida
+    TRAIN_DIR   = ROOT / 'train'                     # …/train/…
+    TEST_DIR    = ROOT / 'test'                      # …/test/…
+    OUTPUT_DIR  = Path('files/output')                     # carpeta donde guardaremos .csv
+    OUTPUT_DIR.mkdir(exist_ok=True)                  # la crea si no existe
+    def build_split_dataframe(split_dir: Path) -> pd.DataFrame:
+        """
+        Recorre un directorio (train o test) y arma un DataFrame con columnas:
+        phrase (str)  ·  sentiment (str)
+        """
+        registros = []
+
+        # rglob('*/*.txt') → todos los .txt que estén exactamente UN nivel más abajo
+        for txt_path in split_dir.rglob('*.txt'):
+            # txt_path = …/train/positive/0003.txt   →   txt_path.parent.name = 'positive'
+            target = txt_path.parent.name.lower()      # garantiza minúsculas
+            phrase    = txt_path.read_text(encoding='utf-8').strip()
+
+            registros.append({'phrase': phrase, 'target': target})
+
+        return pd.DataFrame(registros, columns=['phrase', 'target'])
+    # ----------- Generar DataFrames ----------------------------------------------
+    train_df = build_split_dataframe(TRAIN_DIR)
+    test_df  = build_split_dataframe(TEST_DIR)
+
+    # ----------- Guardar en CSV ---------------------------------------------------
+    train_df.to_csv(OUTPUT_DIR / 'train_dataset.csv', index=False)
+    test_df.to_csv(OUTPUT_DIR / 'test_dataset.csv',  index=False)
+    return pregunta_01
+
     """
     La información requerida para este laboratio esta almacenada en el
     archivo "files/input.zip" ubicado en la carpeta raíz.
